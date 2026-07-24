@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "friday-automation-ui"
+version = "0.1.0"
+description = "Fridai WMS UI / E2E automation suite — Playwright + Python with Page Object Model"
+authors = ["Hemi QA <qa@hemi.local>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+playwright = "^1.47.0"
+pytest = "^8.3.0"
+pytest-playwright = "^0.5.2"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest-html = "^4.1.1"
+pytest-xdist = "^3.6.1"
+ruff = "^0.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

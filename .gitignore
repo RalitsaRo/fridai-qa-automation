@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Poetry
+poetry.lock.bak
+
+# Pytest / Playwright artifacts
+.pytest_cache/
+playwright-report/
+test-results/
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit real env files
+.env
+.env.local
+.env.*.local
+
+# Saved authentication state — never commit a logged-in session
+.auth/
+
+# Coverage / build
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
