@@ -3,10 +3,13 @@
 Playwright + Python E2E automation for Fridai (the WMS Threecolts is building
 as a future add-on to Hemi), built on the **Page Object Model**.
 
-Sister repo: **`../automation_ui/`** is the equivalent suite for Hemi itself.
-This repo follows the same conventions but is a separate project — Fridai has
-its own app, its own login, and (currently) no confirmed backend access, so
-there are no DB/SSH fixtures here yet.
+This repo was split out from the Hemi QA workspace on 2026-07-24 into its own
+history at `https://github.com/RalitsaRo/fridai-qa-automation` — Fridai is a
+separate product with its own app, its own login, and (currently) no
+confirmed backend access, so there are no DB/SSH fixtures here. Hemi's
+equivalent suite (`automation_ui/`, same Page Object Model conventions this
+repo was originally modeled on) lives in the separate `hemi-qa-automation`
+repo — the two are no longer sibling folders.
 
 **Status: verified against the live app, including the full stock-provisioning
 chain (2026-07-16).** `BASE_URL` points at Fridai's real instance
@@ -193,7 +196,7 @@ automation-created rows over time.
 
 **Fixtures** (`tests/conftest.py`, `fixtures/`):
 - Session-scoped for env loading and config.
-- `authenticated_page` performs a real login via `LoginPage`, then waits for the Dashboard heading to render before returning — a hard `goto()` right after login can otherwise race the post-login redirect (confirmed live). If Fridai ever adds CAPTCHA, switch to the saved-auth-state pattern used in `../automation_ui/tests/conftest.py`.
+- `authenticated_page` performs a real login via `LoginPage`, then waits for the Dashboard heading to render before returning — a hard `goto()` right after login can otherwise race the post-login redirect (confirmed live). If Fridai ever adds CAPTCHA, switch to the saved-auth-state pattern used in Hemi's `automation_ui/tests/conftest.py` (separate repo — see above).
 
 **Data** (`data/`):
 - JSON / CSV / Python constants. No secrets — credentials go in `.env`. `test_emails.py` holds the one confirmed gotcha (don't use `.local` domains — see above).
@@ -208,8 +211,17 @@ automation-created rows over time.
 4. Set `path = "/your/route"` so `goto()` works — verify the real route first; this app's SPA routing doesn't always match what you'd guess (`/orders-list`, not `/orders`).
 5. Add a test under `tests/<area>/test_<flow>.py` that uses the Page Object and holds assertions.
 
+## Fridai has its own built-in onboarding tour (discovered 2026-07-24)
+
+Click "Help" (top right, once logged in) → "Getting Started" for an interactive, progress-tracked, two-part tutorial with tooltips pointing at the real UI (not videos, despite the "Watch again" label). It confirms — in the product's own words — several things we'd already reverse-engineered, plus some we hadn't tested:
+
+- **Tutorial 1 — Warehouse setup**: Create locations → Create a supplier ("Suppliers represent who you buy from. You need one before raising a purchase order.") → Create or import products → Establish stock (explicit choice of **Purchase order receive** or **Cycle count**, the latter untested by us).
+- **Tutorial 2 — Order fulfilment**: Create a customer (standalone, via CRM & Suppliers > Customers) → Create a sales order ("Fridai allocates on create") → Pick (Picking Tasks) → Pack (Packing Tasks — "Labels are optional until a courier is configured") → Ship (Shipping Tasks) → Review stock movements (Stock Movements ledger).
+
+`output/Friday/Friday_New_User_Getting_Started_Guide.docx` (v1.4) now incorporates all of this. See the workspace `MEMORY.md` (Hemi repo) for the full write-up.
+
 ## Known follow-ups
 
-1. Build a Page Object for Suppliers ("CRM & Suppliers > Suppliers > Add Supplier") if a test ever needs to create its own supplier instead of reusing "Rali test supplier".
+1. Build Page Objects for Suppliers, standalone Customer creation, Picking/Packing/Shipping Tasks, Stock Movements, and Cycle Count — the tour above confirms what each does, but none have been walked through field-by-field by us yet.
 2. Chase the "Ready to receive"/"Partially Received" → "Received" → "Completed" transitions if a test ever needs a PO in exactly that state (not needed for a product to become orderable — confirmed that happens at "Partially Received" already).
-3. Formalize all the doc-vs-reality gaps and the two real bugs (location homoglyphs, non-functional location dropdown) into the workspace's Documentation Validation Report (`output/Friday/Friday_Validation_Report.docx`).
+3. Formalize all the doc-vs-reality gaps and the two real bugs (location homoglyphs, non-functional location dropdown) into the workspace's Documentation Validation Report (`G:\My Drive\Rali\Fridai\outputs\Friday\Friday_Validation_Report.docx`).

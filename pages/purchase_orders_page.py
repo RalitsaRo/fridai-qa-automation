@@ -14,7 +14,11 @@ Confirmed page elements:
 - Search input, placeholder "Search PO number..."
 - Status filter (native <select>, options = the lifecycle above) and
   Supplier filter (native <select>)
-- Table columns: PO Number, Supplier, Status, Receipt, Total, Actions
+- Table columns: (blank leading column — checkbox/expand, no header text),
+  PO Number, Supplier, **Warehouse** (NEW 2026-08-10 release — the column
+  header count was Supplier/Status/Receipt/Total/Actions before; confirmed
+  live 2026-08-11 the real order is now blank/PO Number/Supplier/
+  Warehouse/Status/Receipt/Total/Actions), Status, Receipt, Total, Actions
 - Per-row action buttons vary by status: Draft/Placed -> "Record ASN",
   "Edit", "Cancel"; Supplier shipped -> "Release for receiving", "Cancel";
   Ready to receive / Partially received -> "Receive" (jumps to the
@@ -22,12 +26,20 @@ Confirmed page elements:
 
 ## Create Purchase Order — 2-step wizard, same modal caveats as Create Order
 
-Step 1 ("Purchase Order Details"): Supplier* (required select — a
-supplier must already exist, e.g. via CRM & Suppliers > Suppliers > "Add
-Supplier"; NOT built out here, tests reuse the pre-existing "Rali test
-supplier"), Receiving Location* (required select, populated from real bin
-locations), Initial status (Draft/Placed), Expected Delivery Date
-(optional date), Notes (optional). Buttons: Cancel, Next.
+Step 1 ("Purchase Order Details"), confirmed live 2026-08-11 after the
+Aug 10 multi-warehouse release added a field — order is now: Supplier*
+(required select — a supplier must already exist, e.g. via CRM &
+Suppliers > Suppliers > "Add Supplier"), **Warehouse*** (NEW — a select
+that's always disabled and pre-filled with whatever warehouse is
+currently active in the global warehouse selector at the top of the app;
+it is NOT meant to be interacted with here — switch the global selector
+*before* opening Create Purchase Order if you need a different
+warehouse), Receiving Location* (required select, populated from real bin
+locations — now the 3rd select, not the 2nd), Initial status
+(Draft/Placed — now the 4th select), Expected Delivery Date (optional
+date), Notes (optional). Buttons: Cancel, Next (disabled until Supplier is
+chosen — confirmed the Warehouse field does not need to be touched for
+Next to enable).
 
 Step 2 ("PO Items"): a "+ New Product" button (unlike Create Order, this
 flow appears to support adding a brand-new product inline — not exercised
@@ -70,6 +82,15 @@ class PurchaseOrdersPage(BasePage):
     def search(self, query: str) -> None:
         self.by_placeholder("Search PO number...").fill(query)
 
+    def first_po_number(self) -> str:
+        """The PO Number cell of the table's first (most recent) row.
+        Confirmed live 2026-08-11: the Aug 10 release inserted a blank
+        leading column (checkbox/expand, no header text) ahead of PO
+        Number, so this is now the table's 2nd `<td>` (index 1), not the
+        1st — a caller using `td.first` directly now reads the blank
+        column and gets an empty string."""
+        return self.page.locator("table tbody tr").first.locator("td").nth(1).inner_text().strip()
+
     # ---- Create Purchase Order (VERIFIED 2026-07-16) --------------------------
 
     def start_create_po(self) -> None:
@@ -82,22 +103,38 @@ class PurchaseOrdersPage(BasePage):
         """Step 1, required. A supplier must already exist (see CRM & Suppliers)."""
         self._po_details_modal().locator("select").nth(0).select_option(label=supplier_name)
 
+    def current_warehouse(self) -> str:
+        """Read-only: the warehouse this PO will be created for. Confirmed
+        live 2026-08-11 — this select (index 1) is always disabled and
+        pre-filled from the app's global warehouse selector; there is
+        nothing to set here. Use this to assert/log which warehouse a test
+        is actually operating against, and switch the global selector
+        beforehand if you need a different one."""
+        select = self._po_details_modal().locator("select").nth(1)
+        return select.evaluate("(el) => el.options[el.selectedIndex].text")
+
     def set_receiving_location(self, *, index: int | None = None, label: str | None = None) -> None:
         """Step 1, required. Pass either `index` (1 = first real option,
         since index 0 is the "Select a location" placeholder) or `label`
         for an exact location name. NOTE: some seeded location codes
         contain a Cyrillic "А" (U+0410) homoglyph mixed with Latin
         characters (confirmed live, e.g. "RZ-<CYRILLIC A>102-A-BIN01") —
-        prefer `index` over hand-typing a `label` to avoid this trap."""
-        select = self._po_details_modal().locator("select").nth(1)
+        prefer `index` over hand-typing a `label` to avoid this trap.
+
+        Confirmed live 2026-08-11: this is now the 3rd select (index 2),
+        not the 2nd — the Aug 10 release inserted the disabled Warehouse
+        select (see `current_warehouse()`) ahead of it."""
+        select = self._po_details_modal().locator("select").nth(2)
         if label is not None:
             select.select_option(label=label)
         else:
             select.select_option(index=index if index is not None else 1)
 
     def set_initial_status(self, status: str) -> None:
-        """Step 1, optional. status: 'Draft' or 'Placed'."""
-        self._po_details_modal().locator("select").nth(2).select_option(label=status)
+        """Step 1, optional. status: 'Draft' or 'Placed'. Confirmed live
+        2026-08-11: now the 4th select (index 3), shifted by the same new
+        Warehouse field — see `set_receiving_location()`."""
+        self._po_details_modal().locator("select").nth(3).select_option(label=status)
 
     def go_to_po_items(self) -> None:
         self._po_details_modal().get_by_role("button", name="Next").click()

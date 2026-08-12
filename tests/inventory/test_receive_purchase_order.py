@@ -60,7 +60,7 @@ def test_receiving_a_purchase_order_makes_a_product_orderable(authenticated_page
 
     # The newly created PO is the most recent, so it's the first table row.
     purchase_orders.wait_for_loaded()
-    po_number = authenticated_page.locator("table tbody tr").first.locator("td").first.inner_text().strip()
+    po_number = purchase_orders.first_po_number()
     assert po_number.startswith("PO-"), f"Expected a PO number in the first row, got {po_number!r}"
 
     # 3. Record ASN (Placed -> Supplier shipped), then release for
