@@ -58,8 +58,20 @@ Step 1 ("Customer Info") confirmed fields: Search Existing Customer
 (autocomplete), Customer Name* / Email* / Phone / Address, Channel
 (a native `<select>` with real option text **"Direct to Consumer"** /
 **"Business to Business"** — the docs' "D2C"/"B2B" abbreviations don't
-appear anywhere in the real UI), then an optional "Shipping Address"
-sub-section (Recipient Name*, Phone, Address Line 1/2, City,
+appear anywhere in the real UI; confirmed live 2026-08-11, still only
+these two options post-Aug-10-release. There is no "Web" channel option
+here — confirmed as expected: Fridai isn't receiving web orders yet
+since it isn't integrated with Hemi. The real "Web orders" concept lives
+in Settings > Warehouses > "Add Warehouse" instead — a per-warehouse
+"Web fulfilment allowed" checkbox plus a Priority field that decides
+which eligible warehouse gets picked from first; see MEMORY.md), then
+**Warehouse** (NEW as of the Aug 10 multi-warehouse release — a select
+that's always disabled and pre-filled with whatever warehouse is
+currently active in the app's global warehouse selector; same pattern as
+Create Purchase Order, see `PurchaseOrdersPage.current_warehouse()` — it
+is now the 2nd select in this modal, so Channel must be targeted by
+index, not a bare `locator("select")`), then an optional "Shipping
+Address" sub-section (Recipient Name*, Phone, Address Line 1/2, City,
 State/Province, Postal Code, Country). None of Step 1's fields carry a
 `data-testid`, and several (Customer Name, Email) aren't even
 programmatically associated with their `<label>` (`get_by_label()` times
@@ -159,8 +171,25 @@ class OrdersPage(BasePage):
     def set_channel(self, channel: str) -> None:
         """channel: 'Direct to Consumer' or 'Business to Business' — these
         are the real <select> option labels; the docs' 'D2C'/'B2B' shorthand
-        does not appear anywhere in the live UI."""
-        self._customer_info_modal().locator("select").select_option(label=channel)
+        does not appear anywhere in the live UI. Confirmed live 2026-08-11:
+        no 'Web' option exists here — see the module docstring for where
+        the real "Web orders" concept lives instead.
+
+        Confirmed live 2026-08-11: this is now the 1st of 2 selects in the
+        modal (index 0) — the Aug 10 release inserted a disabled Warehouse
+        select (see `current_warehouse()`) right after it, so a bare
+        `locator("select")` now hits a strict-mode violation."""
+        self._customer_info_modal().locator("select").nth(0).select_option(label=channel)
+
+    def current_warehouse(self) -> str:
+        """Read-only: the warehouse this order will be created for.
+        Confirmed live 2026-08-11 — this select (index 1) is always
+        disabled and pre-filled from the app's global warehouse selector;
+        there is nothing to set here. Switch the global selector beforehand
+        if you need a different warehouse. Same pattern as
+        `PurchaseOrdersPage.current_warehouse()`."""
+        select = self._customer_info_modal().locator("select").nth(1)
+        return select.evaluate("(el) => el.options[el.selectedIndex].text")
 
     def go_to_order_items(self) -> None:
         """Step 1 -> Step 2. The button is disabled until Customer Name and

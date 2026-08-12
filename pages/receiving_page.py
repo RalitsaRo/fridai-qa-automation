@@ -29,6 +29,16 @@ expects Enter after a scan, not a mouse click.
    an option fires no network request and leaves the step unchanged — a
    real bug, not a locator issue). Use the scan text input instead.
 
+   **Global nav regression, confirmed live 2026-08-11.** The Aug 10
+   multi-warehouse release added a page-wide "Active warehouse" `<select>`
+   (`aria-label="Active warehouse"`, `data-guidance-id="warehouse-shell"`)
+   to the top nav on every page, not just this one -- a bare
+   `page.locator("select")` anywhere in the app can now hit 2 elements
+   instead of 1. `first_available_location_text()` below excludes it via
+   an attribute-selector negation rather than an index, since the global
+   selector's DOM position relative to a given page's own selects isn't
+   guaranteed.
+
    **Data quality trap — confirmed live 2026-07-16, FIXED the same day.**
    Some seeded location codes mixed a Cyrillic "А" (U+0410) with Latin
    characters (e.g. "RZ-<CYRILLIC A>102-A-BIN01", visually
@@ -84,8 +94,14 @@ class ReceivingPage(BasePage):
     def first_available_location_text(self) -> str:
         """Reads option[1]'s exact text from the (non-functional) location
         <select>, so callers never have to hand-type a location code that
-        might contain the Cyrillic-homoglyph trap described above."""
-        return self.page.locator("select").evaluate("(el) => el.options[1].text")
+        might contain the Cyrillic-homoglyph trap described above.
+
+        Confirmed live 2026-08-11: excludes the new page-wide "Active
+        warehouse" global selector (see module docstring) via an
+        attribute-selector negation — a bare `page.locator("select")`
+        now resolves 2 elements on this screen."""
+        location_select = self.page.locator('select:not([aria-label="Active warehouse"])')
+        return location_select.evaluate("(el) => el.options[1].text")
 
     def scan_location(self, location_text: str) -> None:
         field = self.by_placeholder("Scan location barcode...")

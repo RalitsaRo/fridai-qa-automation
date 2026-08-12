@@ -91,8 +91,15 @@ class BasePage:
     def click_nav_item(self, item_text: str, *, exact: bool = True) -> None:
         """Click a nav item revealed after `open_nav_section()`. `exact`
         defaults to True because several nav labels are substrings of each
-        other (e.g. "Orders" vs. "Orders & Fulfillment")."""
-        self.by_role("button", item_text, exact=exact).click()
+        other (e.g. "Orders" vs. "Orders & Fulfillment").
+
+        CONFIRMED LIVE 2026-08-11 (the Aug 10 multi-warehouse release): leaf
+        nav items changed from `<button>` to `<a><span>text</span></a>` —
+        this method used to target role="button" and broke as a result. The
+        top-level, collapsible SECTION headers (`open_nav_section()`, e.g.
+        "Orders & Fulfillment") are still real `<button>`s; only the leaf
+        items you click after expanding a section changed to links."""
+        self.by_role("link", item_text, exact=exact).click()
 
     # ---- Common readiness checks -------------------------------------------
 
