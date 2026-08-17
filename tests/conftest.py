@@ -105,6 +105,18 @@ def authenticated_page(page, test_credentials):  # noqa: ANN001
     switch this fixture to the saved-auth-state pattern used in
     `../automation_ui/tests/conftest.py`.
 
+    Observed live 2026-08-14: running the FULL suite in one `pytest`
+    invocation (~12 tests, each doing a fresh login here) occasionally
+    produces a handful of "Dashboard heading" timeouts clustered at the
+    END of the run — re-running those same tests individually or in a
+    smaller batch immediately afterward passes cleanly every time. This
+    looks like a login rate-limit/throttle on the shared live instance
+    after ~9-10 logins within a couple of minutes, not a bug in the tests
+    or Page Objects. If this becomes a recurring problem, switching to
+    the saved-auth-state pattern mentioned above (one login, reused via
+    storage state) would sidestep it entirely — tracked as a follow-up,
+    not done here.
+
     IMPORTANT: waits for the post-login redirect to the Dashboard (heading
     "Dashboard" visible) before returning. Without this, a test that
     immediately hard-navigates elsewhere (e.g. `OrdersPage.goto()`) can race

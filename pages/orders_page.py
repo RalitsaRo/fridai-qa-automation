@@ -215,3 +215,134 @@ class OrdersPage(BasePage):
         """Step 2's final action. Confirmed: there is no separate "Save
         Draft" button in the real UI — only "Create Order"."""
         self._order_items_modal().get_by_role("button", name="Create Order").click()
+
+    # ---- List-level helpers (VERIFIED live 2026-08-13) -------------------------
+
+    def orders_total_count(self) -> int:
+        """Parses the "Showing N orders total" text above the table."""
+        text = self.page.get_by_text("Showing", exact=False).first.inner_text()
+        # e.g. "Showing 27 orders total"
+        return int(text.split()[1])
+
+    def order_row(self, order_number: str):
+        return self.page.locator("tr", has_text=order_number)
+
+    def order_row_visible(self, order_number: str) -> bool:
+        """Whether `order_number` appears in the CURRENTLY SCOPED list (per
+        the global warehouse selector — see BasePage.set_active_warehouse).
+        Confirmed live 2026-08-13: reallocating an order to a different
+        warehouse makes it disappear from its original warehouse's list
+        entirely, not just show a different Warehouse column value — this
+        is the right way to assert that."""
+        return self.order_row(order_number).count() > 0
+
+    def order_row_warehouse(self, order_number: str) -> str:
+        """Reads the Warehouse column of a visible order row. Raises if the
+        order isn't in the current scope — check `order_row_visible()` or
+        switch the global warehouse selector first."""
+        row = self.order_row(order_number)
+        # Columns: checkbox, Order, Customer, Channel, Warehouse, Assignee,
+        # Total, Status, Packing, Date, Actions.
+        return row.locator("td").nth(4).inner_text().strip()
+
+    # ---- Order detail: ORDER OPS (Reallocate / Split) — NEW, VERIFIED live 2026-08-13 --
+
+    def open_order_details(self, order_number: str) -> None:
+        """Opens the order detail modal for `order_number` via its row's
+        "View" button."""
+        self.order_row(order_number).get_by_role("button", name="View").click()
+        self.page.wait_for_timeout(1000)
+
+    def _order_details_modal(self):
+        """Scope to the order detail modal. "Order Details" is a stable
+        substring of the dynamic heading ("Order Details: ORD-...");
+        "Close" is the modal's own footer button, unique enough here since
+        no order-row action is also named "Close"."""
+        return self.modal_scope("Order Details", "Close")
+
+    def current_order_detail_warehouse(self) -> str:
+        """Reads the "Warehouse: X" line on the order detail Overview tab."""
+        text = self._order_details_modal().get_by_text("Warehouse:", exact=False).first.inner_text()
+        return text.split("Warehouse:", 1)[1].strip()
+
+    def start_reallocate_order(self) -> None:
+        """Requires the order details modal to already be open (see
+        `open_order_details()`). Click "ORDER OPS > Reallocate"."""
+        self._order_details_modal().get_by_role("button", name="Reallocate", exact=True).click()
+        self.page.wait_for_timeout(800)
+
+    def _reallocate_modal(self):
+        """Scope to the "Reallocate Order" modal. Unlike Split, "Reallocate
+        Order" (heading) is NOT a substring of the submit button's own
+        text ("Reallocate") case-insensitively, so a bare "Cancel" anchor
+        does not collide with the footer here — confirmed live 2026-08-13."""
+        return self.modal_scope("Reallocate Order", "Cancel")
+
+    def reallocate_target_warehouse_options(self) -> list[str]:
+        """The Reallocate modal's target dropdown options, incl. the
+        "Select warehouse" placeholder — confirmed live 2026-08-13 this
+        list excludes whichever warehouse the order is currently in.
+        Prefer this over hardcoding a seeded warehouse name."""
+        return self._reallocate_modal().locator("select").evaluate(
+            "(el) => Array.from(el.options).map(o => o.text)"
+        )
+
+    def set_reallocate_target_warehouse(self, warehouse_label: str) -> None:
+        """Required — the modal has no default target (placeholder "Select
+        warehouse"), unlike Split's target, which defaults to "Same as
+        parent order"."""
+        self._reallocate_modal().locator("select").select_option(label=warehouse_label)
+
+    def submit_reallocate(self) -> None:
+        """Confirmed live 2026-08-13: this whole-order move happens
+        immediately (no further confirmation step) and the order
+        disappears from the CURRENT warehouse scope's Orders list right
+        away — see `order_row_visible()`."""
+        self._reallocate_modal().get_by_role("button", name="Reallocate", exact=True).click()
+        self.page.wait_for_timeout(1500)
+
+    def start_split_order(self) -> None:
+        """Requires the order details modal to already be open. Click
+        "ORDER OPS > Split"."""
+        self._order_details_modal().get_by_role("button", name="Split", exact=True).click()
+        self.page.wait_for_timeout(800)
+
+    def _split_modal(self):
+        """Scope to the "Split Order" modal.
+
+        CONFIRMED LIVE 2026-08-13 — do NOT use "Cancel" as the second
+        anchor here (unlike `_reallocate_modal()`): the modal's own submit
+        button reads "Split order", which matches the heading filter
+        "Split Order" case-insensitively (Playwright's `has_text` string
+        matching is case-insensitive). A small footer div containing just
+        "Cancel" + "Split order" then satisfies BOTH filters and `.last`
+        picks that tiny div instead of the real modal — every locator
+        inside it then times out with zero matches. "Target warehouse" is
+        a body-only label that isn't in the footer, so it forces the
+        larger, correct container."""
+        return self.modal_scope("Split Order", "Target warehouse")
+
+    def set_split_target_warehouse(self, warehouse_label: str) -> None:
+        """Optional — defaults to "Same as parent order". Pass this to
+        split units into a sibling order at a DIFFERENT warehouse."""
+        self._split_modal().locator("select").select_option(label=warehouse_label)
+
+    def set_split_quantity(self, quantity: int, *, line_index: int = 0) -> None:
+        """How many units of a line item to move into the new sibling
+        order. `line_index` selects which line item's row when an order
+        has more than one (0 = first) — only single-line orders have been
+        exercised so far, so this defaults to the only case confirmed
+        live."""
+        self._split_modal().locator('input[type="number"]').nth(line_index).fill(str(quantity))
+
+    def submit_split(self) -> None:
+        """Confirmed live 2026-08-13: creates a genuinely new sibling
+        order (its own order number, e.g. "ORD-<today's date>-<hex>" —
+        NOT sharing the parent's date/number), reduces the parent's
+        allocated quantity by the moved amount, and increases
+        `orders_total_count()` by exactly 1. The sibling carries over the
+        same customer/channel/warehouse (unless a different target
+        warehouse was set) but is otherwise an independent order that
+        proceeds through Pick/Pack/Ship on its own."""
+        self._split_modal().get_by_role("button", name="Split order", exact=True).click()
+        self.page.wait_for_timeout(1500)
