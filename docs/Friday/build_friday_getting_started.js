@@ -152,6 +152,14 @@ const summaryTable = new Table({
         bodyCell("Covers the Aug 10, 2026 multi-warehouse release, verified live 2026-08-11 through 2026-08-13. Step 2 (Dashboard & Navigation) updated with the new top-bar warehouse selector and the categorized \"Add Widget\" catalog (General/Operations/Network). New Step 3 — \"Set Up & Understand Warehouses\" — walks the Add Warehouse form field by field, including Priority and the \"Web fulfilment allowed\" flag (the setting that will matter once Fridai integrates with Hemi). All subsequent steps renumbered (old Steps 3–10 are now Steps 4–9, 11, 12). Steps 7a (Create Purchase Order) and 8 (Create Order) updated for a new auto-filled, disabled Warehouse field in both modals. New Step 10 — \"Split & Reallocate Orders\" — documents both new Order Ops actions on an order's detail view: Reallocate (whole-order move to a different warehouse) and Split (fork part of an order's units into a new sibling order, at individual sub-line granularity). Confirmed the Create Order Channel field still has no \"Web\" option and clarified that's expected — Fridai isn't receiving Hemi-sourced orders yet; readiness lives at the per-warehouse \"Web fulfilment allowed\" flag instead. Also flagged a real UX issue: warehouses can end up with duplicate auto-generated names (\"Second warehouse\") if not renamed at creation. Status table updated throughout.", SOC_WIDTHS[3]),
       ],
     }),
+    new TableRow({
+      children: [
+        bodyCell("1.7", SOC_WIDTHS[0]),
+        bodyCell("2026-08-17", SOC_WIDTHS[1]),
+        bodyCell("QA (Fridai project)", SOC_WIDTHS[2]),
+        bodyCell("CORRECTION: the \"select location manually\" dropdown at Step 7d (Receive it) was wrongly marked broken since v1.2 (2026-07-16). Re-verified live: it works correctly — the earlier check selected an option but never pressed Enter afterward, which is what the screen's own instruction text says to do (\"Scan location or select from list, then press Enter to confirm.\"). Selecting an option and pressing Enter fires the real receive request and completes the line, identical to the scan-text path. Step 7d's warning rewritten accordingly.", SOC_WIDTHS[3]),
+      ],
+    }),
   ],
 });
 
@@ -189,7 +197,7 @@ const statusTable = new Table({
     new TableRow({ children: [bodyCell("Stock Transfers", STAT_WIDTHS[0]), bodyCell("NEW nav item confirmed live 2026-08-11 (Inventory Management > Stock Transfers) — moves stock between warehouses; not yet walked through by us", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Stock Movements ledger", STAT_WIDTHS[0]), bodyCell("Documented via the app's own onboarding tour (\"every receive, pick, ship, and count writes a movement\"); not yet walked through by us", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Warehouse location codes (Cyrillic homoglyph)", STAT_WIDTHS[0]), bodyCell("FIXED 2026-07-16 — all 8 affected locations corrected; verified across all locations", STAT_WIDTHS[1])] }),
-    new TableRow({ children: [bodyCell("\"Select location manually\" dropdown", STAT_WIDTHS[0]), bodyCell("Still broken — confirmed live it fires no request at all; use the scan/type field instead", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("\"Select location manually\" dropdown", STAT_WIDTHS[0]), bodyCell("CORRECTED 2026-08-17 — works fine. Select an option, then press Enter (same pattern as the scan field) — fires the real receive request. A prior version of this guide wrongly called it broken; that check never pressed Enter after selecting.", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Duplicate warehouse naming", STAT_WIDTHS[0]), bodyCell("Real UX issue found 2026-08-11 on our seeded test account — multiple warehouses left at their default name all read \"Second warehouse\"; always set a distinct Name when creating one (see Step 3)", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("\"Web\" order channel / Hemi integration readiness", STAT_WIDTHS[0]), bodyCell("Confirmed live 2026-08-12 — not a Create Order channel today; readiness is the per-warehouse \"Web fulfilment allowed\" flag (Step 3), since Fridai isn't yet integrated with Hemi", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Inventory, Locations, Cycle Count Tasks", STAT_WIDTHS[0]), bodyCell("Reachable from the sidebar (confirmed); most contents not inspected in detail", STAT_WIDTHS[1])] }),
@@ -343,7 +351,7 @@ const doc = new Document({
         numberedStep("Confirm the quantity — it defaults to the full remaining amount; just press Enter to accept it", "step7d-numbering"),
         numberedStep("Scan (or type) the put-away location, then press Enter", "step7d-numbering"),
         numberedStep("Once it reads \"Complete!\", click \"Finish receiving\"", "step7d-numbering"),
-        note("the little dropdown labeled \"Or select location manually\" next to the scan field does not appear to work — use the text field instead (type or scan the code, then press Enter). Confirmed live 2026-08-11: a page-wide warehouse selector was added to the top bar around this same time — it's unrelated to this dropdown and doesn't affect it."),
+        note("no keyboard scanner handy? Use the dropdown labeled \"Or select location manually\" instead of typing a code — pick a location from the list, then press Enter to confirm, exactly like the scan field. (Corrected 2026-08-17 — this guide previously said this dropdown didn't work; it does, the earlier check just never pressed Enter after selecting.) Confirmed live 2026-08-11: a page-wide warehouse selector was added to the top bar around this same time — it's unrelated to this dropdown and doesn't affect it."),
         note("your product becomes orderable as soon as this finishes — even though the Purchase Order's own status at that point may still read \"Partially Received\" rather than \"Received.\""),
 
         h2("Alternative: Cycle Count"),
