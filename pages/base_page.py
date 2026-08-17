@@ -101,6 +101,32 @@ class BasePage:
         items you click after expanding a section changed to links."""
         self.by_role("link", item_text, exact=exact).click()
 
+    # ---- Global warehouse selector (Aug 10, 2026 multi-warehouse release) ---
+
+    def warehouse_selector(self) -> Locator:
+        """The page-wide "Active warehouse" `<select>` added to the top nav
+        on every authenticated page (confirmed live 2026-08-11). Scopes
+        most of the app (Dashboard, Orders, Purchase Orders, etc.) to one
+        warehouse, or "All warehouses" for Administrators. Always locate it
+        by this `aria-label`, never a bare `page.locator("select")` — see
+        `ReceivingPage.first_available_location_text()` for why."""
+        return self.page.locator('select[aria-label="Active warehouse"]')
+
+    def set_active_warehouse(self, label: str) -> None:
+        """Switch the global warehouse selector to `label` (e.g. "WH-2 —
+        First Warehouse", or "All warehouses"). Confirmed live 2026-08-13:
+        this re-scopes the current page's data (Orders, Dashboard, etc.),
+        so a short settle wait is built in here — callers still doing
+        their own `wait_for_loaded()` afterward is fine/redundant, not
+        harmful."""
+        self.warehouse_selector().select_option(label=label)
+        self.page.wait_for_timeout(1200)
+
+    def current_active_warehouse(self) -> str:
+        """Read-only: the warehouse currently selected in the global
+        selector."""
+        return self.warehouse_selector().evaluate("(el) => el.options[el.selectedIndex].text")
+
     # ---- Common readiness checks -------------------------------------------
 
     def wait_for_loaded(self, test_id: str, timeout: int = 10_000) -> None:
