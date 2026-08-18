@@ -25,9 +25,14 @@ expects Enter after a scan, not a mouse click.
    `.fill()` — this is a bare focused input at this point).
 3. **Scan put-away location** — text input, placeholder "Scan location
    barcode...", PLUS a same-purpose `<select>` ("Or select location
-   manually...") that does **NOT actually work** (confirmed live: selecting
-   an option fires no network request and leaves the step unchanged — a
-   real bug, not a locator issue). Use the scan text input instead.
+   manually..."). **CORRECTED 2026-08-17** — this dropdown DOES work; an
+   earlier note here claimed it didn't, which was wrong. The on-screen
+   hint reads "Scan location or select from list, then press Enter to
+   confirm." — the earlier check only called `select_option()` and never
+   followed up with Enter, so it looked like a no-op (no network request,
+   step unchanged). Pressing Enter after selecting fires the real
+   `POST /crm/purchase-orders/{id}/receive` and completes the line, same
+   as the scan path. See `select_location_manually()` below.
 
    **Global nav regression, confirmed live 2026-08-11.** The Aug 10
    multi-warehouse release added a page-wide "Active warehouse" `<select>`
@@ -92,9 +97,11 @@ class ReceivingPage(BasePage):
         self.page.keyboard.press("Enter")
 
     def first_available_location_text(self) -> str:
-        """Reads option[1]'s exact text from the (non-functional) location
-        <select>, so callers never have to hand-type a location code that
-        might contain the Cyrillic-homoglyph trap described above.
+        """Reads option[1]'s exact text from the location <select> (this
+        dropdown is real and functional — see `select_location_manually()`
+        below — this accessor just lets callers read a location's exact
+        text without hand-typing a code that might contain the
+        Cyrillic-homoglyph trap described above).
 
         Confirmed live 2026-08-11: excludes the new page-wide "Active
         warehouse" global selector (see module docstring) via an
@@ -107,6 +114,19 @@ class ReceivingPage(BasePage):
         field = self.by_placeholder("Scan location barcode...")
         field.fill(location_text)
         field.press("Enter")
+
+    def select_location_manually(self, index: int = 1) -> None:
+        """Alternative to `scan_location()` — uses the "Or select location
+        manually" dropdown instead of hand-typing/scanning a code.
+        CONFIRMED WORKING live 2026-08-17 (an earlier note here wrongly
+        called this broken): selecting an option alone does nothing
+        visible, but selecting THEN pressing Enter — same pattern as the
+        scan field — fires the real receive request and completes the
+        line. `index=1` is the first real location option (index 0 is the
+        "Or select location manually" placeholder)."""
+        select = self.page.locator('select:not([aria-label="Active warehouse"])')
+        select.select_option(index=index)
+        select.press("Enter")
 
     def finish_receiving(self) -> None:
         self.by_role("button", "Finish receiving").click()
