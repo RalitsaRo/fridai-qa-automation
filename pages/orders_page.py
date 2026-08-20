@@ -388,8 +388,60 @@ class OrdersPage(BasePage):
         `.last()`, so it works correctly for multi-line orders too.
         Confirmed the per-line input defaults to 0, not the full
         remaining amount — partial picking is the explicit default
-        interaction, not an edge case."""
+        interaction, not an edge case.
+
+        `line_index` is DISPLAY order in the "Pick Items" list, which is
+        confirmed live 2026-08-20 to NOT necessarily match the order line
+        items were added to the order in — a 2-line order (RaliP1 added
+        first, a second SKU added second) showed the second SKU FIRST in
+        the Pick modal. Use `pick_line_index_for_sku()` to find the right
+        index by SKU/product name rather than assuming add-order for any
+        order with more than one line."""
         self._pick_modal().locator('input[type="number"]').nth(line_index + 1).fill(str(quantity))
+
+    def pick_line_index_for_sku(self, sku_or_name: str) -> int:
+        """Finds a line's position in the "Pick Items" list by SKU or
+        product name substring, for use as `set_pick_quantity()`'s
+        `line_index` — see that method's docstring for why display order
+        can't be assumed to match the order lines were added in. Raises
+        `ValueError` if no line matches.
+
+        CONFIRMED LIVE 2026-08-20: a naive `locator("div").filter(has_text=
+        ...)` approach does NOT work here — "Quantity:"/"Location:" text
+        appears at multiple NESTED div levels per line (an outer wrapper
+        spanning all lines, a per-line row, and smaller inner divs), so
+        every such filter matches several ancestors of the same line
+        rather than one container per line, and every line ends up
+        resolving to index 0. This walks up from each number input's own
+        DOM position instead (first ancestor whose text contains
+        "Location:" — that's always the immediate per-line row, never the
+        multi-line wrapper, since we stop at the nearest match) to build
+        an accurate {input position: line text} map via JS."""
+        modal = self._pick_modal()
+        # `.slice(1)` drops the top "Qty" scan-add field up front — its
+        # own ancestor chain has no "Location:" text nearby, so an
+        # unbounded walk-up doesn't stop until it reaches a top-level
+        # container spanning ALL lines, which then falsely substring-
+        # matches every SKU at index 0 (confirmed live 2026-08-20: this
+        # was the actual bug in an earlier version of this method, which
+        # tried to filter it out afterward by checking for a non-empty
+        # result — that check doesn't work, since the over-broad walk
+        # always finds *some* non-empty ancestor eventually).
+        line_texts: list[str] = modal.evaluate(
+            """
+            (el) => Array.from(el.querySelectorAll('input[type="number"]')).slice(1).map((input) => {
+                let node = input;
+                while (node && !(node.textContent || '').includes('Location:')) {
+                    node = node.parentElement;
+                }
+                return node ? node.textContent : '';
+            })
+            """
+        )
+        for i, text in enumerate(line_texts):
+            if sku_or_name in text:
+                return i
+        raise ValueError(f"No Pick Items line found matching {sku_or_name!r} in {line_texts!r}")
 
     def mark_all_as_picked(self) -> None:
         """Shortcut button that fills every line's quantity to its full

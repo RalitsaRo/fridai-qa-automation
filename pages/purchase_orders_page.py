@@ -84,12 +84,25 @@ class PurchaseOrdersPage(BasePage):
 
     def first_po_number(self) -> str:
         """The PO Number cell of the table's first (most recent) row.
-        Confirmed live 2026-08-11: the Aug 10 release inserted a blank
-        leading column (checkbox/expand, no header text) ahead of PO
-        Number, so this is now the table's 2nd `<td>` (index 1), not the
-        1st — a caller using `td.first` directly now reads the blank
-        column and gets an empty string."""
-        return self.page.locator("table tbody tr").first.locator("td").nth(1).inner_text().strip()
+
+        CORRECTED 2026-08-20 to not assume a fixed column index. The Aug
+        10 release inserted a blank leading column (checkbox/expand, no
+        header text) ahead of PO Number, making it the table's 2nd `<td>`
+        (index 1) instead of the 1st — this method was patched to
+        `nth(1)` accordingly. Confirmed live 2026-08-20 that blank column
+        is GONE again (table headers are back to PO NUMBER/SUPPLIER/
+        WAREHOUSE/STATUS/RECEIPT/TOTAL/ACTIONS, 7 columns, no leading
+        blank) — `nth(1)` now reads the SUPPLIER cell instead. Rather than
+        chase a third index if this flips again, this scans the row's
+        cells for the first one starting with "PO-" (the real PO number
+        format), which is correct regardless of how many columns precede
+        it."""
+        cells = self.page.locator("table tbody tr").first.locator("td").all_inner_texts()
+        for cell in cells:
+            text = cell.strip()
+            if text.startswith("PO-"):
+                return text
+        raise ValueError(f"No cell starting with 'PO-' found in the first row: {cells!r}")
 
     # ---- Create Purchase Order (VERIFIED 2026-07-16) --------------------------
 
