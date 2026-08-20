@@ -13,6 +13,12 @@ order at 3/3 allocated, with `orders_total_count()` going from 26 to 27 —
 this test asserts the same shape of result (allowing for whatever the
 real starting count is at run time).
 
+UPDATED 2026-08-20 for the Aug 19 order-queue rework (see
+pages/orders_page.py's module docstring): the per-row allocation summary
+text changed format from "SKU: N/N allocated" to the new PROGRESS
+column's "N ready to pick/pack/ship" — the final assertions below were
+updated to match the new wording via `order_row_progress_text()`.
+
 ⚠️ REAL DATA WARNING: creates one real Order (quantity 10) and splits it
 into two on the shared test-phase instance (https://app.fridai.pro) —
 same caveat as test_create_order.py.
@@ -103,10 +109,16 @@ def test_split_order_creates_sibling_and_reduces_parent(authenticated_page: Page
     assert sibling_order_number != order_number
 
     # 5. The parent's row should reflect the reduced quantity, and the
-    #    sibling's should reflect the moved quantity.
-    expect(orders.order_row(order_number)).to_contain_text(
-        f"{ORIGINAL_QUANTITY - SPLIT_QUANTITY}/{ORIGINAL_QUANTITY - SPLIT_QUANTITY} allocated"
+    #    sibling's should reflect the moved quantity. Both still need
+    #    picking (a split doesn't change fulfilment stage, just quantity).
+    assert orders.order_row_progress_text(order_number) == (
+        f"{ORIGINAL_QUANTITY - SPLIT_QUANTITY} ready to pick"
+    ), (
+        f"Expected parent's progress to read "
+        f"'{ORIGINAL_QUANTITY - SPLIT_QUANTITY} ready to pick', got "
+        f"{orders.order_row_progress_text(order_number)!r}"
     )
-    expect(orders.order_row(sibling_order_number)).to_contain_text(
-        f"{SPLIT_QUANTITY}/{SPLIT_QUANTITY} allocated"
+    assert orders.order_row_progress_text(sibling_order_number) == f"{SPLIT_QUANTITY} ready to pick", (
+        f"Expected sibling's progress to read '{SPLIT_QUANTITY} ready to pick', got "
+        f"{orders.order_row_progress_text(sibling_order_number)!r}"
     )
