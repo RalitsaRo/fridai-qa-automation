@@ -160,6 +160,14 @@ const summaryTable = new Table({
         bodyCell("CORRECTION: the \"select location manually\" dropdown at Step 7d (Receive it) was wrongly marked broken since v1.2 (2026-07-16). Re-verified live: it works correctly — the earlier check selected an option but never pressed Enter afterward, which is what the screen's own instruction text says to do (\"Scan location or select from list, then press Enter to confirm.\"). Selecting an option and pressing Enter fires the real receive request and completes the line, identical to the scan-text path. Step 7d's warning rewritten accordingly.", SOC_WIDTHS[3]),
       ],
     }),
+    new TableRow({
+      children: [
+        bodyCell("1.8", SOC_WIDTHS[0]),
+        bodyCell("2026-08-20", SOC_WIDTHS[1]),
+        bodyCell("QA (Fridai project)", SOC_WIDTHS[2]),
+        bodyCell("Covers the Aug 19, 2026 visual rework of the order queue, verified live 2026-08-19/20. Step 9 rewritten: the Orders page is now called just \"Orders\" (was \"Orders & Fulfillment\"), with a Work Queues tab row (All orders/Ready to pick/Ready to pack/Ready to ship/Partially fulfilled/Backorders), a combined PROGRESS column (bar + text) replacing the old standalone Packing column, and a minimized ACTION column (one dynamic next-action button + View + a \"More actions\" menu for extras like \"Cancel remaining\"). Step 9a (Pick) fully verified field by field for the first time, including a first-class partial-pick flow: every line's quantity defaults to 0, and completing with less than the full amount opens a 3-choice \"Incomplete pick\" confirmation (go back and keep picking / leave the rest unpicked, which marks the order \"Partially Picked\" / cancel the rest, which — confirmed NOT equivalent — marks it fully \"Picked\" instead since nothing is left pending). Confirmed multi-line orders can be picked at different quantities per line, with the order's overall progress reflecting the sum across all lines. Bulk actions confirmed gated by the top-bar warehouse selector: a specific warehouse shows Bulk pick/pack/ship + Combine; \"All warehouses\" hides the three warehouse-specific ones, leaving only Allocate + Combine. Step 10 renamed \"Reallocate, Split & Combine Orders\" — the old \"ORDER OPS\" label is gone, these three (plus Cancel remaining) now live together in one \"NEXT ACTION\" bar on the order detail view. New Step 10c documents Combine end to end: merges 2+ whole orders (same customer only — confirmed precondition) into one new \"Combined\"-tagged order; the source orders don't just get cancelled, they disappear entirely, even from search.", SOC_WIDTHS[3]),
+      ],
+    }),
   ],
 });
 
@@ -186,13 +194,16 @@ const statusTable = new Table({
     new TableRow({ children: [bodyCell("Full chain works on a genuinely blank, newly-registered account", STAT_WIDTHS[0]), bodyCell("Verified live 2026-07-31 end to end: Location → Supplier → Product → Purchase Order → Receive → Order, tested on a fresh registration with zero prior data (not our seeded test account)", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("\"Getting Started\" tour completion tracking", STAT_WIDTHS[0]), bodyCell("Real bug found 2026-07-31 — shows 100% (10/10 steps) complete on a brand-new, zero-data account, even immediately after clicking \"Reset progress.\" Contradicts its own subtitle (\"Progress follows warehouse data\"). Not yet reported to the dev team.", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Cycle Count as an alternative to Purchase-Order receiving", STAT_WIDTHS[0]), bodyCell("Documented via the app's own onboarding tour; not yet walked through by us", STAT_WIDTHS[1])] }),
-    new TableRow({ children: [bodyCell("Orders & Fulfillment list page", STAT_WIDTHS[0]), bodyCell("Verified live, incl. the Packing column and (new, 2026-08-11) a Warehouse column", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Orders page (\"Order Queue\")", STAT_WIDTHS[0]), bodyCell("Verified live 2026-08-19/20 — reworked since earlier versions of this guide: now titled just \"Orders\", with Work Queues tabs and a combined PROGRESS column (bar + text) replacing the old standalone Packing column; see Step 9", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("\"Create Order\" form fields (both steps)", STAT_WIDTHS[0]), bodyCell("Verified live — Customer Name and Email are required; Channel options are \"Direct to Consumer\"/\"Business to Business\" only (no \"Web\" option — confirmed expected, see Step 8); final action is \"Create Order\" (no separate \"Save Draft\")", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Create Order / Create Purchase Order: auto-filled Warehouse field", STAT_WIDTHS[0]), bodyCell("NEW, verified live 2026-08-11 — always disabled, pre-filled from the top-bar warehouse selector; see Steps 7a and 8", STAT_WIDTHS[1])] }),
-    new TableRow({ children: [bodyCell("Order \"Reallocate\" and \"Split\" actions", STAT_WIDTHS[0]), bodyCell("NEW, verified live 2026-08-13, both modals field by field; see Step 10", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Order \"Reallocate\", \"Split\", and \"Combine\" actions", STAT_WIDTHS[0]), bodyCell("Verified live 2026-08-13/20, all three field by field, incl. Combine's same-customer precondition; see Step 10", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Standalone \"Create a Customer\" (CRM & Suppliers)", STAT_WIDTHS[0]), bodyCell("Documented via the app's own onboarding tour; not yet walked through by us (we've only used inline customer creation during order creation)", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Order Items product search requires available stock", STAT_WIDTHS[0]), bodyCell("Verified live — a product search only returns products with received stock; a brand-new product does not appear", STAT_WIDTHS[1])] }),
-    new TableRow({ children: [bodyCell("Order row actions (View/Pick/Pack/Ship/Cancel)", STAT_WIDTHS[0]), bodyCell("Buttons confirmed present; the Picking/Packing/Shipping Tasks pages they open are described by the app's own tour but not yet walked through by us", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Order row's next-action button + \"More actions\" menu", STAT_WIDTHS[0]), bodyCell("Verified live 2026-08-19/20 — one dynamic Pick/Pack/Ship button per row plus View, plus a kebab menu (e.g. \"Cancel remaining\") when more actions exist; see Step 9", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Pick modal, incl. partial-pick flow", STAT_WIDTHS[0]), bodyCell("Verified live field by field 2026-08-20, incl. multi-line orders and both the \"leave rest unpicked\" and \"cancel the rest\" outcomes — see Step 9a", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Pack / Ship modals", STAT_WIDTHS[0]), bodyCell("Buttons confirmed present, next-action labels confirmed (\"Pack (N)\"/\"Ship remaining (N)\" etc.); the modals themselves described by the app's own tour but not yet walked field by field by us — see Steps 9b/9c", STAT_WIDTHS[1])] }),
+    new TableRow({ children: [bodyCell("Bulk actions gated by warehouse selector", STAT_WIDTHS[0]), bodyCell("Verified live 2026-08-19 — a specific warehouse shows Bulk pick/pack/ship + Combine; \"All warehouses\" hides the three warehouse-specific ones, leaving only Allocate + Combine; see Step 9", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Purchase Orders: create, Record ASN, Release for receiving, Receiving scan flow", STAT_WIDTHS[0]), bodyCell("Verified live, end to end (Draft → Placed → Supplier shipped → Ready to receive → Partially received) — a product was confirmed orderable immediately after receiving", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Stock Transfers", STAT_WIDTHS[0]), bodyCell("NEW nav item confirmed live 2026-08-11 (Inventory Management > Stock Transfers) — moves stock between warehouses; not yet walked through by us", STAT_WIDTHS[1])] }),
     new TableRow({ children: [bodyCell("Stock Movements ledger", STAT_WIDTHS[0]), bodyCell("Documented via the app's own onboarding tour (\"every receive, pick, ship, and count writes a movement\"); not yet walked through by us", STAT_WIDTHS[1])] }),
@@ -222,8 +233,10 @@ const doc = new Document({
       { reference: "step7c-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
       { reference: "step7d-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
       { reference: "step8-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
+      { reference: "step9a-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
       { reference: "step10a-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
       { reference: "step10b-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
+      { reference: "step10c-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "start" }] },
     ],
   },
   sections: [
@@ -231,7 +244,7 @@ const doc = new Document({
       properties: { page: { size: PAGE, margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
       children: [
         title("Friday (Fridai WMS) — New User Getting Started Guide"),
-        body("Reviewed instance: https://app.fridai.pro (test phase, no production environment yet). Covers the Aug 10, 2026 multi-warehouse release.", { italics: true }),
+        body("Reviewed instance: https://app.fridai.pro (test phase, no production environment yet). Covers the Aug 10, 2026 multi-warehouse release and the Aug 19, 2026 order-queue visual rework.", { italics: true }),
 
         h1("Summary of Changes"),
         summaryTable,
@@ -372,38 +385,63 @@ const doc = new Document({
         numberedStep("Click \"Create Order\" to finish — Fridai allocates the available stock immediately (confirmed by the app's own tour: \"Fridai allocates on create\"). There is no separate \"Save Draft\" button in the real app, despite what some documentation says", "step8-numbering"),
         note("you can also create a customer ahead of time via CRM & Suppliers > Customers > Add Customer, instead of filling in customer details inline as shown above — confirmed as a real option by the app's own onboarding tour (\"Create the customer who will receive the sales order\"), though we haven't walked that standalone flow ourselves yet."),
 
-        h1("Step 9 — Fulfil the Order: Pick, Pack, Ship"),
-        body("(Confirmed via the app's own onboarding tour; not yet walked step-by-step by us)", { italics: true }),
-        body("Back on the Orders & Fulfillment page, each order row has its own action buttons — all confirmed present: View, Pick, Pack, Ship, Cancel. Each opens a dedicated page for that stage of fulfilment:"),
+        h1("Step 9 — Fulfil the Order: The Order Queue (Pick, Pack, Ship)"),
+        body("CONFIRMED LIVE 2026-08-19/20 — the Orders page had a significant visual rework since earlier versions of this guide. It's simply called \"Orders\" now (not \"Orders & Fulfillment\"), subtitled \"Work the floor from allocate through ship. Queues overlap when an order still has mixed work.\"", { bold: false }),
 
-        h2("9a. Pick"),
-        body("Picking Tasks — create or open a picking task, then scan/confirm units from allocated locations. (description confirmed via the app's own tour)"),
+        h2("Work Queues"),
+        body("A row of tabs above the table lets you jump straight to orders at a given stage, each with a live count: All orders, Ready to pick, Ready to pack, Ready to ship, Partially fulfilled, and Backorders. Clicking one filters the table to just that queue."),
+
+        h2("Reading an order's row"),
+        body("Each row now shows a PROGRESS column — a colored bar plus text like \"5 ready to pack\" or \"3 ready to pick\" (a cancelled order shows plain \"Cancelled\" text instead, no bar). The ACTION column is minimized to one bold \"next action\" button reflecting exactly where that order is — \"Pick (N)\", \"Pack remaining (N)\", \"Ship (N)\", etc. — plus \"View\", plus (when there's more to do) a \"⋯ More actions\" button revealing extra options like \"Cancel remaining\"."),
+
+        h2("9a. Pick  (Verified live field-by-field, 2026-08-20)"),
+        numberedStep("Click the row's \"Pick (N)\" button (or open the order via \"View\" and use the same button in its NEXT ACTION bar)", "step9a-numbering"),
+        numberedStep("The Pick modal shows an Order Summary (Total Items / Items Picked / Remaining), a \"Scan Items to Pick\" row for barcode scanning, and a \"Pick Items\" list — one entry per line item, each with its own quantity box", "step9a-numbering"),
+        numberedStep("Enter how many units you're picking of EACH line — confirmed live, every box defaults to 0, not the full amount, so you must explicitly choose a quantity (or click \"Mark All as Picked\" to fill every line to its full remaining amount in one click)", "step9a-numbering"),
+        numberedStep("Click \"Complete Picking\"", "step9a-numbering"),
+        body("If you entered less than a line's full remaining quantity, a second confirmation appears — \"Incomplete pick — what next?\" — with three real choices:"),
+        bullet("\"Go back and keep picking\" — returns to the pick list; nothing is submitted yet"),
+        bullet("\"Complete partial pick, leave rest as unpicked\" — ships what you picked now; the rest stays on the SAME order to be picked later. Confirmed live: the order's status becomes \"Partially Picked\" and its next action becomes \"Pack remaining (N)\" for just the picked units"),
+        bullet("\"Complete partial pick, cancel the rest\" — ships what you picked now and CANCELS the remainder (the app itself warns this cannot be undone). Confirmed live this is NOT the same end-state as the choice above: since nothing is left pending, the order goes all the way to status \"Picked\" (not \"Partially Picked\"), with a plain \"Pack (N)\" next action — no \"remaining\" wording"),
+        note("on a multi-line order, you can pick different quantities per line independently — e.g. fully pick one line and only partially pick another in the same session. Confirmed live: the order's overall progress and next action reflect the SUM of picked units across every line, not any single line's figure on its own."),
+        note("\"Complete Picking\" stays disabled while every line reads 0 — you can't submit a pick of nothing."),
 
         h2("9b. Pack"),
+        body("(Confirmed via the app's own onboarding tour; not yet walked field-by-field by us)", { italics: true }),
         body("Packing Tasks — pack picked units into boxes. Labels are optional until a courier integration is configured — this confirms that skipping the shipping label works fine when no carrier is set up yet, rather than being a bug."),
 
         h2("9c. Ship"),
+        body("(Confirmed via the app's own onboarding tour; not yet walked field-by-field by us)", { italics: true }),
         body("Shipping Tasks — confirm shipment to release the order and record the outbound stock movement."),
 
-        body("The Orders & Fulfillment table also shows a Packing column separate from the order's Status column, so you can track packing progress independently of the overall order status (confirmed live), plus (new, confirmed live 2026-08-11) a Warehouse column showing which warehouse each order is assigned to. For multiple orders at once, use the \"Bulk Pick,\" \"Bulk Pack,\" and \"Bulk Ship\" buttons at the top of the page (confirmed present) after selecting orders with their checkboxes."),
+        body("For multiple orders at once, select rows with their checkboxes — a floating action bar appears at the bottom of the screen. CONFIRMED LIVE 2026-08-19: what shows up there depends on the top-bar warehouse selector from Step 2. With one SPECIFIC warehouse active, you'll see \"Bulk pick,\" \"Bulk pack,\" \"Bulk ship,\" and \"Combine\" (see Step 10c below). Switch to \"All warehouses\" and the three warehouse-specific ones disappear, leaving only \"Allocate\" and \"Combine\" — Pick/Pack/Ship only make sense for one physical site at a time, but Allocate and Combine don't."),
 
-        h1("Step 10 — Split & Reallocate Orders  (NEW — Verified live 2026-08-13)"),
-        body("With multiple warehouses, an order's stock isn't guaranteed to all be in one place. Opening any order's detail view (click \"View\" on an order row) now shows an \"ORDER OPS\" section with two actions for handling this."),
+        h1("Step 10 — Reallocate, Split & Combine Orders  (Verified live 2026-08-13/20)"),
+        body("With multiple warehouses, an order's stock isn't guaranteed to all be in one place, and separate orders sometimes need to travel together. Opening any order's detail view (click \"View\" on an order row) shows a \"NEXT ACTION\" bar with the order's primary action alongside Reallocate, Split, and (when applicable) Cancel remaining — CONFIRMED LIVE 2026-08-20: these used to sit under a separate \"ORDER OPS\" label; that's gone now, they're all just part of the same NEXT ACTION bar."),
 
         h2("10a. Reallocate Order — move the whole order to a different warehouse"),
         body("Use this when the entire order should simply be fulfilled from a different warehouse — for example, the wrong warehouse was assigned, or the current one can't fulfil it at all. Confirmed live: the app's own description is \"Move [order] to a different warehouse. Existing reservations will be released and stock re-allocated at the destination.\""),
-        numberedStep("Open the order and click \"Reallocate\" under ORDER OPS", "step10a-numbering"),
+        numberedStep("Open the order and click \"Reallocate\"", "step10a-numbering"),
         numberedStep("Choose a Target warehouse from the dropdown", "step10a-numbering"),
         numberedStep("Click \"Reallocate\"", "step10a-numbering"),
         note("this is all-or-nothing — every unit on the order moves together. There's no way to move only part of an order this way; that's what Split (below) is for."),
 
         h2("10b. Split Order — move part of an order into a new sibling order"),
         body("Use this when only some of an order's units should be handled differently — for example, one warehouse only has partial stock and you want to ship what's available now while the rest comes from elsewhere. Confirmed live: the app's own description is \"Move pending or allocated units from [order] into a new sibling order.\" Internally, each unit of a line item is tracked as its own \"sub-line\" (visible under the order's \"Items & Sub-lines\" tab) — Split works at this per-unit level, not just per line item."),
-        numberedStep("Open the order and click \"Split\" under ORDER OPS", "step10b-numbering"),
+        numberedStep("Open the order and click \"Split\"", "step10b-numbering"),
         numberedStep("Optionally choose a Target warehouse for the split-off units — leave it as \"Same as parent order\" if you just want a separate order in the same warehouse", "step10b-numbering"),
         numberedStep("Enter how many units of each line item to move", "step10b-numbering"),
         numberedStep("Click \"Split order\"", "step10b-numbering"),
         note("after splitting, the parent order and the new sibling order each proceed independently through Pick/Pack/Ship — they no longer need to ship together."),
+
+        h2("10c. Combine Orders  (NEW — Verified live 2026-08-20)"),
+        body("The counterpart to Split: merges two or more WHOLE orders into one new order, instead of forking part of one order apart. Reached from the bulk action bar (Step 9), not from an individual order's NEXT ACTION bar."),
+        body("⚠ Confirmed precondition: Combine is only enabled when every order you've selected belongs to the SAME customer — select orders from different customers and the button stays disabled."),
+        numberedStep("On the Orders page, check the boxes for two or more orders belonging to the same customer", "step10c-numbering"),
+        numberedStep("Click \"Combine\" in the floating action bar", "step10c-numbering"),
+        numberedStep("A confirmation modal appears: \"Merge N orders for {customer} into one new order. Source orders will be cancelled.\" Review the listed source orders", "step10c-numbering"),
+        numberedStep("Click \"Combine orders\" to confirm", "step10c-numbering"),
+        note("confirmed live: the source orders don't just get relabeled \"Cancelled\" — they disappear entirely, not even findable by searching their order number afterward. A genuinely new order appears in their place, tagged \"Combined\" with a \"from ORD-X, ORD-Y\" line recording where it came from, and its quantity is the sum of all the source orders' quantities."),
 
         h1("Step 11 — Review Stock Movements"),
         body("(Confirmed via the app's own onboarding tour; not yet walked step-by-step by us)", { italics: true }),
@@ -418,7 +456,7 @@ const doc = new Document({
         body("These sections are all reachable from the sidebar but haven't been inspected in detail yet."),
 
         h1("What's Confirmed vs. Not Yet Verified"),
-        body("This guide is built from the original Fridai documentation, a live inspection of the app, the app's own built-in onboarding tour (v1.4), a full run-through on a genuinely new, zero-data registration (v1.5), and — as of version 1.6 — a live regression and feature pass following the Aug 10, 2026 multi-warehouse release. These don't always agree — this table is your quick reference for what to trust as-is versus what to double-check as you go."),
+        body("This guide is built from the original Fridai documentation, a live inspection of the app, the app's own built-in onboarding tour (v1.4), a full run-through on a genuinely new, zero-data registration (v1.5), a live regression and feature pass following the Aug 10, 2026 multi-warehouse release (v1.6), and — as of version 1.8 — a live pass over the Aug 19, 2026 order-queue visual rework. These don't always agree — this table is your quick reference for what to trust as-is versus what to double-check as you go."),
         statusTable,
 
         h1("Quick Reference"),
