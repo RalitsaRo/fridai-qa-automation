@@ -36,7 +36,10 @@ class DashboardPage(BasePage):
     # ---- Widgets --------------------------------------------------------------
 
     def add_widget_button(self):
-        return self.by_role("button", "+ Add Widget")
+        # Live 2026-09-23: Dashboard renders two identical "+ Add Widget"
+        # buttons (duplicate in DOM). Prefer the first visible one so
+        # expect(...).to_be_visible() doesn't hit a strict-mode violation.
+        return self.by_role("button", "+ Add Widget").first
 
     def best_selling_products_widget(self):
         return self.by_role("heading", "Best Selling Products")

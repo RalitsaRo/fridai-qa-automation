@@ -60,6 +60,15 @@ def test_reallocate_order_moves_it_to_target_warehouse(authenticated_page: Page)
     orders.open_order_details(order_number)
     assert origin_warehouse in orders.current_order_detail_warehouse()
 
+    # User-role / single-warehouse accounts only get Split + Cancel remaining
+    # in NEXT ACTION (confirmed live 2026-09-23) — Reallocate is omitted.
+    if not orders.has_reallocate_action():
+        pytest.skip(
+            "Reallocate not available for this account/warehouse scope. "
+            "Needs a multi-warehouse (typically Admin) account with "
+            "another target warehouse to move the order to."
+        )
+
     orders.start_reallocate_order()
     options = orders.reallocate_target_warehouse_options()
     target_warehouse = next(

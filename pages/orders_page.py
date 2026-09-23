@@ -594,13 +594,29 @@ class OrdersPage(BasePage):
         text = self._order_details_modal().get_by_text("Warehouse:", exact=False).first.inner_text()
         return text.split("Warehouse:", 1)[1].strip()
 
+    def has_reallocate_action(self) -> bool:
+        """True when the open order-details modal exposes a Reallocate
+        button. Confirmed live 2026-09-23: User-role accounts (single
+        warehouse scope) only show Pick / Split / Cancel remaining —
+        Reallocate is omitted because there is no other warehouse to move
+        the order to."""
+        return (
+            self._order_details_modal()
+            .get_by_role("button", name="Reallocate", exact=True)
+            .count()
+            > 0
+        )
+
     def start_reallocate_order(self) -> None:
         """Requires the order details modal to already be open (see
         `open_order_details()`). Click "Reallocate" — confirmed live
         2026-08-20 this now lives in the "NEXT ACTION" bar alongside the
         primary action button and "Split"/"Cancel remaining" (the old
         standalone "ORDER OPS" section/label no longer exists — see
-        `_order_details_modal()`)."""
+        `_order_details_modal()`).
+
+        Callers should check `has_reallocate_action()` first when the
+        account may not have multi-warehouse access."""
         self._order_details_modal().get_by_role("button", name="Reallocate", exact=True).click()
         self.page.wait_for_timeout(800)
 
@@ -651,21 +667,23 @@ class OrdersPage(BasePage):
     def _split_modal(self):
         """Scope to the "Split Order" modal.
 
-        CONFIRMED LIVE 2026-08-13 — do NOT use "Cancel" as the second
-        anchor here (unlike `_reallocate_modal()`): the modal's own submit
-        button reads "Split order", which matches the heading filter
-        "Split Order" case-insensitively (Playwright's `has_text` string
-        matching is case-insensitive). A small footer div containing just
-        "Cancel" + "Split order" then satisfies BOTH filters and `.last`
-        picks that tiny div instead of the real modal — every locator
-        inside it then times out with zero matches. "Target warehouse" is
-        a body-only label that isn't in the footer, so it forces the
-        larger, correct container."""
-        return self.modal_scope("Split Order", "Target warehouse")
+        RECHECK 2026-09-23: Split now renders as a real `role="dialog"`.
+        The old body label "Target warehouse" is gone — the dialog copy
+        says "Splits stay within your warehouse." Prefer the dialog role;
+        fall back to a body-only phrase that is NOT also in the footer
+        ("Cancel" + "Split order"), which would otherwise match a tiny
+        footer div via case-insensitive `has_text` (see 2026-08-13 note)."""
+        dialog = self.page.get_by_role("dialog").filter(has_text="Split Order")
+        if dialog.count() > 0:
+            return dialog.last
+        return self.modal_scope("Split Order", "Move pending")
 
     def set_split_target_warehouse(self, warehouse_label: str) -> None:
-        """Optional — defaults to "Same as parent order". Pass this to
-        split units into a sibling order at a DIFFERENT warehouse."""
+        """Optional — historically defaulted to "Same as parent order" and
+        let you fork units to a DIFFERENT warehouse. Confirmed live
+        2026-09-23: the target-warehouse `<select>` is gone from Split
+        (same-warehouse only). Kept for callers that still expect the
+        hook; will time out if the select is absent."""
         self._split_modal().locator("select").select_option(label=warehouse_label)
 
     def set_split_quantity(self, quantity: int, *, line_index: int = 0) -> None:

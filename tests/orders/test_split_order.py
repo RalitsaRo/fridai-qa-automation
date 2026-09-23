@@ -79,8 +79,9 @@ def test_split_order_creates_sibling_and_reduces_parent(authenticated_page: Page
     orders_before = orders.orders_total_count()
     known_order_numbers_before = _visible_order_numbers(authenticated_page)
 
-    # 2. Split off SPLIT_QUANTITY units into a new sibling order (same
-    #    warehouse — target left at "Same as parent order").
+    # 2. Split off SPLIT_QUANTITY units into a new sibling order.
+    #    Confirmed live 2026-09-23: Split stays within the current warehouse
+    #    (no target-warehouse dropdown anymore).
     orders.open_order_details(order_number)
     orders.start_split_order()
     orders.set_split_quantity(SPLIT_QUANTITY)
