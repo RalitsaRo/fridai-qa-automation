@@ -1,12 +1,10 @@
-"""Partial picking — a first-class flow in the Aug 19, 2026 order-queue rework.
+"""Partial picking — first-class flow (Aug 19, 2026 order-queue rework).
 
-Confirmed live 2026-08-19: the Pick Order modal's per-line quantity input
-defaults to 0 (not the full remaining amount), and completing with less
-than the full quantity opens a second "Incomplete pick — what next?"
-confirmation with three explicit choices: go back and keep picking,
-complete partial pick and leave the rest unpicked, or complete partial
-pick and cancel the rest. This test exercises the middle (non-destructive)
-choice end to end and asserts the resulting order state.
+RECHECK 2026-10-15: Pick dialog heading is "Pick ORD-...", section
+"Items to pick", CTA is dynamic ("Complete · N left" /
+"Complete picking · N"), "Mark all" shortcut. Incomplete-pick choices
+are unchanged. Per-line qty still defaults empty/0; partial complete
+still opens "Incomplete pick — what next?" with the three choices.
 
 See pages/orders_page.py's module docstring for the full narrative.
 
@@ -87,8 +85,8 @@ def test_partial_pick_leaves_remainder_on_same_order(authenticated_page: Page) -
 
 @pytest.mark.regression
 def test_complete_picking_disabled_at_zero_quantity(authenticated_page: Page) -> None:
-    """Boundary check: confirmed live 2026-08-19 the "Complete Picking"
-    button is disabled while every line's quantity is 0 — you can't
+    """Boundary check: RECHECK 2026-10-15 — the Complete CTA is absent
+    (not merely disabled) while every line's quantity is 0. You can't
     complete a pick of nothing."""
     unique_suffix = str(int(time.time()))
     customer_name = f"Zero Qty Pick Test Customer {unique_suffix}"
@@ -112,7 +110,7 @@ def test_complete_picking_disabled_at_zero_quantity(authenticated_page: Page) ->
 
     orders.click_next_action(order_number)
     modal = orders._pick_modal()  # noqa: SLF001 — test-only introspection
-    expect(modal.get_by_role("button", name="Complete Picking")).to_be_disabled()
+    expect(modal.get_by_role("button", name="Complete", exact=False)).to_have_count(0)
 
 
 CANCEL_ORIGINAL_QUANTITY = 6

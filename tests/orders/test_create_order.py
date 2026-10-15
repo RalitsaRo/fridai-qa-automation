@@ -58,5 +58,9 @@ def test_create_and_submit_order(authenticated_page: Page) -> None:
     orders.submit_new_order()
 
     # Back on the Orders & Fulfillment list — confirm the new order appears.
+    # Scope to the table: after submit the Create Order drawer can still
+    # briefly expose the same customer name (strict-mode duplicate).
     orders.wait_for_loaded()
-    expect(authenticated_page.get_by_text(customer_name)).to_be_visible()
+    expect(
+        authenticated_page.get_by_role("table").get_by_text(customer_name)
+    ).to_be_visible()
