@@ -18,4 +18,4 @@ def test_products_page_loads(authenticated_page: Page) -> None:
     products.wait_for_loaded()
 
     expect(products.by_role("button", "Add Product")).to_be_visible()
-    expect(products.by_placeholder("Search by name, SKU, or barcode...")).to_be_visible()
+    expect(products.by_placeholder("Name, SKU, or barcode…")).to_be_visible()

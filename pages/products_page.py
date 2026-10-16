@@ -7,7 +7,8 @@ Confirmed page elements:
 - H1 "Products"
 - Buttons: "Bulk Actions (Coming Soon)" (disabled/future), "Upload Products",
   "Add Product"
-- Search input, placeholder "Search by name, SKU, or barcode..."
+- Search input, placeholder "Name, SKU, or barcode…" (rechecked 2026-10-15;
+  was previously "Search by name, SKU, or barcode...")
 - "All Statuses" filter button, "Clear Filters" button
 - Row checkboxes (bulk select) + per-row actions: "Edit", "Inventory", "Delete"
 - Table columns: Product, SKU, Barcode, Purchase Price, Low Stock
@@ -53,7 +54,7 @@ class ProductsPage(BasePage):
         self.by_role("heading", "Products").wait_for(state="visible", timeout=timeout)
 
     def search(self, query: str) -> None:
-        self.by_placeholder("Search by name, SKU, or barcode...").fill(query)
+        self.by_placeholder("Name, SKU, or barcode…").fill(query)
 
     def clear_filters(self) -> None:
         self.by_role("button", "Clear Filters").click()
